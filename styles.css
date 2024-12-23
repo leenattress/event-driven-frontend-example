@@ -1,0 +1,138 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    padding: 0;
+    background-color: #f4f4f9;
+}
+
+h1 {
+    color: #333;
+}
+
+input[type="text"] {
+    padding: 10px;
+    width: 200px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    margin-top: 5px;
+    border-radius: 4px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Align items to the ends */
+}
+
+li button {
+    margin-left: 10px;
+    padding: 5px 10px; /* Add padding to the button */
+}
+
+.skeleton {
+    background-color: #e0e0e0;
+    color: transparent;
+    animation: pulse 1.5s infinite;
+    height: 40px;
+}
+
+@keyframes pulse {
+    0% {
+        background-color: #e0e0e0;
+    }
+    50% {
+        background-color: #f0f0f0;
+    }
+    100% {
+        background-color: #e0e0e0;
+    }
+}
+
+.toast {
+    background-color: #ffcccb; /* Subtle red */
+    color: #333;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 200px;
+}
+
+.toast button {
+    background: none;
+    border: none;
+    color: #333;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 10px;
+}
+
+.spinner {
+    border: 2px solid #f3f3f3; /* Light grey */
+    border-top: 2px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Align text left for each todo item */
+.todo-item {
+    text-align: left;
+}
+
+/* Style for when the checkbox is checked */
+.todo-item.completed {
+    color: grey;
+    text-decoration: line-through;
+}
+
+/* Assuming this is the container for your to-do items */
+.todo-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    /* Add any other necessary styles */
+}
+
+/* Style for individual to-do items */
+.todo-item {
+    /* Add styles for individual items if needed */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    /* Add any other necessary styles */
+}

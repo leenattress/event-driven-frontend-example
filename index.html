@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+    <h1>Todo List - Flaky Event Driven Version</h1>
+    <p>This is a simple todo list application that uses a flaky event-driven API. The API is designed to simulate random
+        500 errors and slow responses. More importantly, we are simulating an event driven API with a queue in front of
+        the database.</p>
+    <input type="text" id="todo-input" placeholder="Add a new todo">
+    <button id="add-todo">Add</button>
+    <ul id="todo-list"></ul>
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
