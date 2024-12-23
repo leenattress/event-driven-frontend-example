@@ -8,13 +8,14 @@ In this example, we decouple the HTTP reception of the command (See CQRS pattern
 
 For good measure, we also simulate random 500 errors, as well as exponential backoff for all the API calls, to simulate terrible internet or a transient service issue.
 
+This is not an excersize in writing a great frontend in the latest frameworks, its plain js. It's not an attempt to make a great API, its only here to simulate something you might build in your cloud or bare metal, and only exists to demonstrate eventual consistency and error recovery.
 
 ## Features
 
 - Real-time updates using WebSockets
 - (Fake) Event-driven backend architecture, with queues
 - Demonstrates eventual consistency in a web application
-- Random deliberate 500 errors that we recover from
+- Random deliberate 500 errors that we recover from with retrys in the frontend
 
 ## Prerequisites
 
@@ -30,9 +31,9 @@ For good measure, we also simulate random 500 errors, as well as exponential bac
   npm run api
   ```
 
-  This script will start the backend server and serve the HTML application.
+  This script will start the backend server and serve the API.
 
-- **Start the project**: 
+- **Start the frontend**: 
 
   ```bash
   npm run dev
