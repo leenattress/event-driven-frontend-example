@@ -47,6 +47,10 @@ This is not an excersize in writing a great frontend in the latest frameworks, i
 - `styles.css`: Contains the styles for the application.
 - `index.html`: The main HTML file for the application.
 
+## API Structure
+
+[See in Swagger](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/leenattress/event-driven-frontend-example/refs/heads/main/openapi.yml)
+
 ## License
 
 This project is licensed under the MIT License.
