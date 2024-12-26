@@ -1,47 +1,95 @@
-class ToDoApi {
-    constructor() {
-        this.baseUrl = 'http://localhost:7686/todos';
-    }
+const API_URL = 'http://localhost:7686/todos';
 
-    async getTodos() {
-        return this.retryFetch(this.baseUrl);
-    }
+const handleResponse = async (response) => {
+  if ([200, 201, 202].includes(response.status)) {
+    return await response.json();
+  } else {
+    throw new Error(`Request failed with status: ${response.status}`);
+  }
+};
 
-    async addTodo(todo) {
-        return this.retryFetch(this.baseUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(todo)
-        });
+const exponentialBackoff = async (fn, onFailure, retries = 5, delay = 1000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      console.warn(`Attempt ${i + 1} failed. Retrying...`);
+      if (i === retries - 1) {
+        console.error('Network Error:', error);
+        onFailure(error);
+      }
+      await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
     }
+  }
+};
 
-    async deleteTodo(id) {
-        return this.retryFetch(`${this.baseUrl}/${id}`, {
-            method: 'DELETE'
-        });
-    }
+const handleError = (error, onFailure) => {
+  console.error('🛜 Network Error:', error);
+  onFailure(error);
+};
 
-    async retryFetch(url, options = {}, retries = 5, delay = 500) {
-        try {
-            const response = await fetch(url, options);
-            if (response.ok) {
-                return response.json();
-            }
-            if (response.status === 500 && retries > 0) {
-                console.log(`Retrying... (${retries} attempts left)`);
-                await this.delay(delay);
-                return this.retryFetch(url, options, retries - 1, delay * 2);
-            }
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        } catch (error) {
-            console.error('Fetch error:', error);
-            throw error;
-        }
-    }
+export const fetchTodos = async (onSuccess, onFailure) => {
+  try {
+    return await exponentialBackoff(async () => {
+      const response = await fetch(API_URL);
+      return await handleResponse(response, onSuccess, onFailure) || [];
+    });
+  } catch (error) {
+    handleError(error, onFailure);
+    return [];
+  }
+};
 
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-}
+export const createTodo = async (newTodo, onSuccess, onFailure) => {
+  try {
+    return await exponentialBackoff(async () => {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTodo),
+      });
+      return await handleResponse(response, onSuccess, onFailure);
+    });
+  } catch (error) {
+    handleError(error, onFailure);
+    return null;
+  }
+};
 
-export default ToDoApi; 
+export const updateTodo = async (id, updatedTodo, onSuccess, onFailure) => {
+  try {
+    return await exponentialBackoff(async () => {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedTodo),
+      });
+      return await handleResponse(response, onSuccess, onFailure);
+    });
+  } catch (error) {
+    handleError(error, onFailure);
+    return null;
+  }
+};
+
+export const deleteTodo = async (id, onSuccess, onFailure) => {
+  try {
+    return await exponentialBackoff(async () => {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+      });
+      if ([200, 201, 202].includes(response.status)) {
+        onSuccess();
+        return true;
+      } else {
+        const errorMessage = 'Failed to delete todo';
+        console.error(errorMessage);
+        onFailure(errorMessage);
+        return false;
+      }
+    });
+  } catch (error) {
+    handleError(error, onFailure);
+    return false;
+  }
+};

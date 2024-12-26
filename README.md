@@ -1,14 +1,8 @@
 # Event Driven Frontends
 
-This project is a basic HTML application designed to teach how to use WebSockets and update an event-driven backend with eventual consistency. It demonstrates how real-time communication can be achieved between a client and server, and how data consistency is managed over time.
+This project is a simple React application that demonstrates using WebSockets to update an event-driven backend with eventual consistency. It shows how real-time communication can be established between a client and server, and how data consistency is maintained over time. In AWS, when data is stored behind a queue, direct confirmation of data being saved is not possible. Instead, a 202 (request accepted) is returned, and later, the service responsible for saving the record emits an event to notify the frontend.
 
-Fir any service in AWS where the data reaches the store (any kind of database) behind a queue, a direct confirmation of the data being save is not possible. The best we can do is to return a 202 (request accepted) and then later, the service responsible for saving the record will emit an event that messages the frontend somehow.
-
-In this example, we decouple the HTTP reception of the command (See CQRS pattern), from the processing in the backend. WE create a fake queue and some fake delays to simulate a lengthly queue processing of a command.
-
-For good measure, we also simulate random 500 errors, as well as exponential backoff for all the API calls, to simulate terrible internet or a transient service issue.
-
-This is not an excersize in writing a great frontend in the latest frameworks, its plain js. It's not an attempt to make a great API, its only here to simulate something you might build in your cloud or bare metal, and only exists to demonstrate eventual consistency and error recovery.
+This example separates the HTTP reception of commands from backend processing, following the CQRS pattern. It uses a simulated queue and delays to mimic lengthy command processing. To enhance realism, random 500 errors and exponential backoff for API calls are simulated, representing poor internet or transient service issues. This repo is not an exercise in creating a sophisticated frontend or API. It uses a basic Rect app to illustrate eventual consistency and error recovery concepts.
 
 ## Features
 
@@ -17,40 +11,54 @@ This is not an excersize in writing a great frontend in the latest frameworks, i
 - Demonstrates eventual consistency in a web application
 - Random deliberate 500 errors that we recover from with retrys in the frontend
 
-## Prerequisites
+## Start the demo
 
-- Node.js installed on your machine
+```bash
+npm i
+npm run api
+npm run start
+```
 
-## Usage
+# 🤔 Why Though?
 
-### NPM Scripts
+## Problems
 
-- **Start the server**: 
+In an event driven system using cqrs or similar, we do not receive confirmation that a command has changed the data as requested via the HTTP layer. The best we can hope for is strong contract validation and a 202, request accepted for processing.
 
-  ```bash
-  npm run api
-  ```
+If an error occurs related to your command, such as an internal failure in a downstream service then we cannot be informed due to the decoupled nature of even driven microservices. 
 
-  This script will start the backend server and serve the API.
+## Opportunities 
 
-- **Start the frontend**: 
+If somebody else changes either the record you are looking at, the page you are on, or even a single field you both occupy then we can now let them know, enabling real time collaboration. The same mechanism used to confirm your update went through can also be used to inform others who care about the record you uodated that it has changed. If we play it smart, we get multiplayer for almost free.
 
-  ```bash
-  npm run dev
-  ```
+## Moving parts
 
-## Project Structure
+To allow the user to receive messages from internal services we are going to need a few things
 
-- `api.cjs`: Contains the server-side logic for handling WebSocket connections and events.
-- `src/ToDoApi.js`: Manages the API calls related to the ToDo functionality.
-- `src/main.js`: The main entry point for the example client-side JavaScript.
-- `styles.css`: Contains the styles for the application.
-- `index.html`: The main HTML file for the application.
+First, on the frontend application we will need a mechanism to receive websocket messages. This is so that real time messages from services, either success messages or failure messages can be displayed to the user, or used to influence the UX. Well need some somponents here, such as toast popups with appropriate colours to handle both errors and successes. 
 
-## API Structure
+Next we need a service to handle our websocket connections. In cloud providers such as AWS their API gateway offers this out of the box. Web sockets are a standard so whatever your architecture you'll be able to create something for your front end to connect to and receive messages from. 
 
-[See in Swagger](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/leenattress/event-driven-frontend-example/refs/heads/main/openapi.yml)
+Your web-socket enabled endpoint will need to store the active connections so that other services in your event driven system don't need to worry about it. Here are the goals of your web-socket service:
 
-## License
+- To allow users to connect to a web-socket
+- To store their socket id alongside their internal user id
+- To listen to events in the system destined for a specific user id and send it to their socket id
 
-This project is licensed under the MIT License.
+### Why translate the socket id into a user id? 
+
+A socket id is ephemeral. Regardless of the user logged in state, refreshing the browser will change the socket id. A user across two different windows won't share the same socket id either. We need a way to determine the id from the user. So we use a lookup. It only makes sense to store a list of active sockets against a user since it's possible they have more than one window open to the application. 
+
+This means that any other service we have in our platform no longer needs to worry about web-sockets. All it has to do is take the outcome of a command and the id of a user who cares about that outcome and emit a regular event to the service bus about it. We've decoupled the web sockets and delegated the complexity to a single service and fulfilled the single responsibility principle. 
+
+## Standards
+
+Let's t agree on a message passing standard between the frontend and the backend socket server. In out main use case which is receiving updates about database interactions were going to need two schema. 
+
+### The internal status schema
+
+This is an object that can be emitted by any service in the platform. It must contain the user I'd of the target user and a payload of data destined for that user. 
+
+### The front end socket schema
+
+After we have traded our user id for our socket id we can now target the correct browser window for that user. This schema will be the payload from the first schema. We will add some structure to this payload so the front end has an easier time using it, with things such as the success or failure of the command, and helpful keys like a timestamp and the entity id we target to update in the UX.

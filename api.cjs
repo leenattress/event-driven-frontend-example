@@ -33,10 +33,14 @@ setInterval(() => {
         const { verb, action, data } = queue.shift();
         console.log(`Processing queue item with data: ${JSON.stringify(data)}`);
         setTimeout(() => {
-            action(data);
-            console.log(`Processed queue item with data: ${JSON.stringify(data)}`);
-            // Optionally broadcast the updated todos
-            broadcastUpdate(verb, data);
+            if (Math.random() < 0.1) { // 10% chance to discard the queue item
+                console.log(`Discarded queue item with data: ${JSON.stringify(data)}`);
+            } else {
+                action(data);
+                console.log(`Processed queue item with data: ${JSON.stringify(data)}`);
+                // Optionally broadcast the updated todos
+                broadcastUpdate(verb, data);
+            }
         }, Math.random() * 2000 + 3000); // Random delay between 3000ms (3s) and 6000ms (6s)
     }
 }, 500);
