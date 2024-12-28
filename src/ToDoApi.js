@@ -1,46 +1,44 @@
 const API_URL = 'http://localhost:7686/todos';
 
 const handleResponse = async (response) => {
-  if ([200, 201, 202].includes(response.status)) {
+  if (response.ok) {
     return await response.json();
-  } else {
-    throw new Error(`Request failed with status: ${response.status}`);
   }
+  throw new Error(`Request failed with status: ${response.status}`);
 };
 
-const exponentialBackoff = async (fn, onFailure, retries = 5, delay = 1000) => {
+const exponentialBackoff = async (fn, retries = 5, delay = 500) => {
   for (let i = 0; i < retries; i++) {
     try {
       return await fn();
     } catch (error) {
       console.warn(`Attempt ${i + 1} failed. Retrying...`);
       if (i === retries - 1) {
-        console.error('Network Error:', error);
-        onFailure(error);
+        throw error;
       }
       await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
     }
   }
 };
 
-const handleError = (error, onFailure) => {
+const handleError = (error) => {
   console.error('🛜 Network Error:', error);
-  onFailure(error);
 };
 
-export const fetchTodos = async (onSuccess, onFailure) => {
+export const fetchTodos = async ({ onFailure }) => {
   try {
     return await exponentialBackoff(async () => {
       const response = await fetch(API_URL);
-      return await handleResponse(response, onSuccess, onFailure) || [];
+      return await handleResponse(response) || [];
     });
   } catch (error) {
-    handleError(error, onFailure);
+    handleError(error);
+    onFailure();
     return [];
   }
 };
 
-export const createTodo = async (newTodo, onSuccess, onFailure) => {
+export const createTodo = async (newTodo) => {
   try {
     return await exponentialBackoff(async () => {
       const response = await fetch(API_URL, {
@@ -48,15 +46,15 @@ export const createTodo = async (newTodo, onSuccess, onFailure) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newTodo),
       });
-      return await handleResponse(response, onSuccess, onFailure);
+      return await handleResponse(response);
     });
   } catch (error) {
-    handleError(error, onFailure);
+    handleError(error);
     return null;
   }
 };
 
-export const updateTodo = async (id, updatedTodo, onSuccess, onFailure) => {
+export const updateTodo = async (id, updatedTodo) => {
   try {
     return await exponentialBackoff(async () => {
       const response = await fetch(`${API_URL}/${id}`, {
@@ -64,32 +62,27 @@ export const updateTodo = async (id, updatedTodo, onSuccess, onFailure) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedTodo),
       });
-      return await handleResponse(response, onSuccess, onFailure);
+      return await handleResponse(response);
     });
   } catch (error) {
-    handleError(error, onFailure);
+    handleError(error);
     return null;
   }
 };
 
-export const deleteTodo = async (id, onSuccess, onFailure) => {
+export const deleteTodo = async (id) => {
   try {
     return await exponentialBackoff(async () => {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
       });
-      if ([200, 201, 202].includes(response.status)) {
-        onSuccess();
+      if (response.ok) {
         return true;
-      } else {
-        const errorMessage = 'Failed to delete todo';
-        console.error(errorMessage);
-        onFailure(errorMessage);
-        return false;
       }
+      throw new Error('Failed to delete todo');
     });
   } catch (error) {
-    handleError(error, onFailure);
+    handleError(error);
     return false;
   }
 };

@@ -6,7 +6,7 @@ import TodoButton from './components/TodoButton';
 import TodoList from './components/TodoList';
 import randomTodos from './randomTodos';
 
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import './App.css';
@@ -22,14 +22,14 @@ function App() {
     onError: (error) => console.error('WebSocket error:', error),
     onMessage: (event) => {
       const { verb, payload } = JSON.parse(event.data);
-      
+
       switch (verb) {
         case 'create':
           if (payload && payload.id) {
             setTodos(prevTodos => {
               const todoExists = prevTodos.some(todo => todo.id === payload.id);
               if (todoExists) {
-                return prevTodos.map(todo => 
+                return prevTodos.map(todo =>
                   todo.id === payload.id ? { ...todo, confirmed: true, text: `${payload.text} ⚡️` } : todo
                 );
               } else {
@@ -61,10 +61,16 @@ function App() {
 
   useEffect(() => {
     setNewTodoText(randomTodos[Math.floor(Math.random() * randomTodos.length)]);
-    fetchTodos().then(fetchedTodos => {
+    const fetchTodosWrapper = async () => {
+      const fetchedTodos = await fetchTodos({
+        onFailure: () => {
+          toast.error("Failed to fetch todos, please check your network connection.")
+        }
+      });
       setTodos(fetchedTodos);
-      setLoading(false);      
-    });
+      setLoading(false);
+    };
+    fetchTodosWrapper();
   }, []);
 
   const handleAddTodo = async () => {
@@ -72,12 +78,12 @@ function App() {
       const tempId = Date.now();
       setTodos([...todos, { id: tempId, text: newTodoText, confirmed: false, className: 'new-item' }]);
       setNewTodoText('');
-      
+
       try {
         setNewTodoText(randomTodos[Math.floor(Math.random() * randomTodos.length)]);
         const newTodo = await createTodo({ text: newTodoText });
-        setTodos(prevTodos => 
-          prevTodos.map(todo => 
+        setTodos(prevTodos =>
+          prevTodos.map(todo =>
             todo.id === tempId ? { ...newTodo, confirmed: true, className: '' } : todo
           )
         );
@@ -90,8 +96,8 @@ function App() {
 
   const handleDeleteTodo = async (id) => {
     try {
-      setTodos(prevTodos => 
-        prevTodos.map(todo => 
+      setTodos(prevTodos =>
+        prevTodos.map(todo =>
           todo.id === id ? { ...todo, className: 'deleting' } : todo
         )
       );
