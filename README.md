@@ -191,3 +191,33 @@ flowchart TB
 - `Todo HTTP Layer` - A way for the frontend to create events in event bridge with security
 - `Todo Service Layer` - A service to store todo, that reacts to todo commands
 - `Event Bridge` - A bus that handles inter service events, decoupling the services
+
+## FAQ Section
+
+### Q: What is the purpose of the `todo-id` and `todo-text` in the front-end socket schema?
+A: The `todo-id` and `todo-text` are recognized by the frontend application and are used in the `todo-create` function. This function adds the `todo` to the list locally. Similarly, deleting and updating for example, has its own schema.
+
+### Q: How does the user interact with the system?
+A: The user interacts with the system through the Web Frontend, which is a visual interface for managing todos.
+
+### Q: What role does the Websocket HTTP Service play in the architecture?
+A: The Websocket HTTP Service acts as a gateway to send real-time messages to the user, enabling real-time communications between the Web Frontend and the backend services.
+
+### Q: How does the Todo HTTP Layer ensure security?
+A: The Todo HTTP Layer provides a secure way for the frontend to create events in the Event Bridge, ensuring that only authorized actions are performed.
+
+### Q: What is the function of the Todo Service Layer?
+A: The Todo Service Layer is responsible for storing todos and reacting to todo commands, ensuring that todos are managed and updated correctly.
+
+### Q: What is the Event Bridge and why is it important?
+A: The Event Bridge is a bus that handles inter-service events, decoupling the services. It allows different services to communicate and react to events without being directly dependent on each other, promoting a more modular and scalable architecture.
+
+### Q: How does the Todo HTTP Layer handle queries?
+A: The Todo HTTP Layer handles queries by exposing endpoints that the Web Frontend can call. These endpoints allow the frontend to retrieve todos by calling the todo service. The HTTP Layer ensures that all requests are authenticated and authorized before processing them.
+
+### Q: How does the Todo HTTP Layer interact with the Todo Service Layer?
+A: The Todo HTTP Layer interacts with the Todo Service Layer by making internal API calls. When a request is received from the Web Frontend, the HTTP Layer processes the request and then calls the appropriate function in the Todo Service Layer to perform the required action, such as retrieving single or list of todo.
+
+### Q: How does the Todo HTTP Layer ensure the integrity of the data?
+A: The Todo HTTP Layer ensures the integrity of the data by validating all incoming requests and ensuring that they meet the required criteria using JSON schema. It also handles any necessary data transformations and sanitizations before passing putting any commands on the Event Bridge. Additionally, it ensures that all actions are performed within the context of the authenticated user, maintaining data consistency and security.
+
