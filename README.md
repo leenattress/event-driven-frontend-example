@@ -224,3 +224,58 @@ A: The Todo HTTP Layer interacts with the Todo Service Layer by making internal 
 ### Q: How does the Todo HTTP Layer ensure the integrity of the data?
 A: The Todo HTTP Layer ensures the integrity of the data by validating all incoming requests and ensuring that they meet the required criteria using JSON schema. It also handles any necessary data transformations and sanitizations before passing putting any commands on the Event Bridge. Additionally, it ensures that all actions are performed within the context of the authenticated user, maintaining data consistency and security.
 
+# Resiliencey
+
+## Methods to Improve Web Application Resilience
+
+### **Retry Logic**
+Implement retry mechanisms to automatically reattempt failed API requests after a certain interval. You can retry on queries `GET` and commands `PUT/POST/DELETE` all the same.
+
+### **Exponential Backoff**
+Use exponential backoff strategy to gradually increase the wait time between retries, reducing the load on the server.
+
+```js
+delay * Math.pow(2, i)
+```
+This is a simple implementation of an exponential backoff strategy, which is commonly used in network programming to manage retries after a failure. This means that with each retry, the delay time increases exponentially.
+
+### **Caching**
+Cache responses from API calls to serve data even when the network is down or the API is unresponsive. Our HTTP layer is seperate, remember that.
+
+### **Graceful Degradation**
+Design the application to maintain core functionality even when some services are unavailable. Have the UX degrade gracefully by removing elements that can not be used given the current outage, for example. Talk to your UX designer for great ideas here.
+
+### **Offline Mode**
+Enable offline mode to allow users to continue using the application with limited functionality and sync data when the connection is restored.  This feature of browsers is frequently forgotten. You can also use the offline state and degrade the UX gracefully.
+
+```js
+window.addEventListener("offline", (event) => {
+  // do something when we go offline
+});
+
+window.addEventListener("online", (event) => {
+  // do something when we come back online
+});
+```
+
+### **Timeouts and Circuit Breakers**
+Set appropriate timeouts for API requests and use circuit breakers to prevent the application from waiting indefinitely for a response. Different browsers can set these to different times, or even leave the connection open, so be sure to specify a timeout to your request and treat it as a failure.
+
+### **Fallback Mechanisms**
+Provide fallback mechanisms to handle failures gracefully, such as showing default data or user-friendly error messages. Keep the user in the loop. Stop them from angrily refreshing the browser or rage clicking buttons.
+
+### **Monitoring and Alerts**
+Implement monitoring and alerting systems to detect and respond to issues with APIs and network connectivity promptly. This one is for your platform team to help you with. If an API or a service is down, while the user is receiving your verbally delightful error messages, you need to be alerted so you can fix it. If you're lucky, then you might find the problem before the customer does.
+
+### **Progressive Enhancement**
+Build the application with progressive enhancement to ensure that it works on varying network conditions and devices. For example, you can start with a basic HTML structure that works without JavaScript, then add JavaScript enhancements for better interactivity. Additionally, you can implement service workers to cache static assets and API responses, allowing the app to function offline.
+
+# Final word
+
+Building a resilient web app means ensuring it handles failures gracefully, maintains core functionality, and provides a seamless user experience even under adverse conditions. Implement retry logic, exponential backoff, caching, graceful degradation, offline mode, timeouts, circuit breakers, fallback mechanisms, monitoring, alerts, and progressive enhancement. Resilience is not just a feature; it's essential for a robust and user-friendly application.
+
+Anybody can put up a database and a frontend, but not every team can build something that scales and works well even under stress and failures. Hopefully this document helps you get there.
+
+- Lee Nattress - Architect
+
+
