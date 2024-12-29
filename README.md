@@ -203,6 +203,9 @@ A: The user interacts with the system through the Web Frontend, which is a visua
 ### Q: What role does the Websocket HTTP Service play in the architecture?
 A: The Websocket HTTP Service acts as a gateway to send real-time messages to the user, enabling real-time communications between the Web Frontend and the backend services.
 
+### Q: Why is the HTTP Layer separate from the Service Layer?
+A: The HTTP Layer is separate from the Service Layer to promote a clear separation of concerns. The HTTP Layer is responsible for handling incoming HTTP requests, performing authentication and authorization, and exposing endpoints to the Web Frontend. On the other hand, the Service Layer is focused on the business logic, managing and processing todos, and reacting to commands. This separation allows each layer to be developed, tested, and maintained independently, leading to a more modular and scalable architecture.
+
 ### Q: How does the Todo HTTP Layer ensure security?
 A: The Todo HTTP Layer provides a secure way for the frontend to create events in the Event Bridge, ensuring that only authorized actions are performed.
 
