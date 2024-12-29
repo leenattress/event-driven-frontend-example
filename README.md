@@ -128,12 +128,66 @@ Let's agree on a message-passing standard between the frontend and the backend s
 
 ### The internal status schema
 
-This is an object that can be emitted by any service in the platform. It must contain the user ID of the target user and a payload of data destined for that user.
+This is an object that can be emitted by any service in the platform. It must contain the user ID of the target user and a payload of data destined for that user. This event is specifcally to send messages to the frontend users, it will be triggered after a success message from the todo service. This a very important distinction.
+
+```json
+{
+    "user-id": "68ebe6d8-2764-44c6-9b84-3e63a276e758",
+    "action": "todo-create",
+    "payload": {
+        "todo-id": "a994c5ff-7c4d-4086-bb1f-817c928bad98",
+        "todo-text": "Take the bins out"
+    }
+}
+```
+- `user-id` - Something in your platform to identify the user. In the sockets service we will swap this for their current socket-id. They may have multiple socket-id, since they might have multiple browser windows open and we need this message to go to all of them.
+- `action` - This will be passed into the frontend app. It lets the app know what context the payload will be applied to.
+- `payload` - This is the data that will be passed into the function handling the action in the frontend.
 
 ### The front-end socket schema
 
 After we have traded our user ID for our socket ID, we can now target the correct browser window for that user. This schema will be the payload from the first schema. We will add some structure to this payload so the front end has an easier time using it, with things such as the success or failure of the command, and helpful keys like a timestamp and the entity ID we target to update in the UX.
 
+```json
+{
+    "todo-id": "a994c5ff-7c4d-4086-bb1f-817c928bad98",
+    "todo-text": "Take the bins out"
+}
+```
 
+In this case, we see that `todo-id` and `todo-text` are recognised by the frontend application and they are to be used in the `todo-create` function. We can imagine that this function might add this `todo` to the list locally.
 
+## Architecture
 
+```mermaid
+flowchart TB
+    user["<big>«Person»</big><br>User"]:::person
+    webfrontend["<big>«Container»</big><br> Web Frontend"]:::internalContainer
+    subgraph Platform
+        websocketservice["<big>«Container»</big><br> Websocket HTTP Service"]:::internalContainer
+        todohttp["<big>«Container»</big><br> Todo HTTP Layer"]:::internalContainer
+        todoservice["<big>«Container»</big><br> Todo Service Layer"]:::internalContainer
+        eventbridge["<big>«Container»</big><br> Event Bridge"]:::externalContainer
+    end
+    user<-- Interacts with -->webfrontend
+    webfrontend<-- Real-time communications -->websocketservice
+    webfrontend-- HTTP requests -->todohttp
+    todohttp-- Publishes -->eventbridge
+    eventbridge-- Listens -->todoservice
+    todoservice--Success and Failure events -->eventbridge
+    eventbridge-- Publishes -->websocketservice
+
+    %% Element type definitions
+    classDef person fill:#08427b, color:#fff, font-size:12px
+    classDef internalContainer fill:#1168bd, color:#fff, font-size:12px  
+    classDef externalContainer fill:#999999, color:#fff, font-size:12px
+    style Platform fill:transparent
+  
+```
+
+- `User` - Somebody who will be both creating and reading todo
+- `Web Frontend` - A visual interface for the todo
+- `Websocket HTTP Service` - A websocket http gateway to send realtime messages to the user
+- `Todo HTTP Layer` - A way for the frontend to create events in event bridge with security
+- `Todo Service Layer` - A service to store todo, that reacts to todo commands
+- `Event Bridge` - A bus that handles inter service events, decoupling the services
