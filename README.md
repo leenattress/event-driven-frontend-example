@@ -72,6 +72,7 @@ If somebody else changes either the record you are looking at, the page you are 
 
 ```mermaid
 sequenceDiagram
+    participant Another User
     participant User
     participant HTTP Layer
     participant Event Bus
@@ -97,6 +98,7 @@ sequenceDiagram
     deactivate Service Layer
     Event Bus->>HTTP Layer: Notify HTTP Layer
     HTTP Layer->>User: Notify User by web-socket
+    HTTP Layer->>Another User: Notify Another User by web-socket
     deactivate Event Bus
 ```
 
