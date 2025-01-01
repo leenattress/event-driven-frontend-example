@@ -1,0 +1,16 @@
+.waiting {
+  color: #000;
+  font-size: 1rem;
+  font-weight: bold;
+  animation: rotate 0.5s linear infinite;
+  padding: 1rem;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

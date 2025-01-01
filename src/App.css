@@ -3,14 +3,35 @@ body {
   background-color: #f4f4f9;
   margin: 0;
   padding: 0;
+  display: flex;
+  justify-content: center;
+  height: 100vh;
 }
 
 .App {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .App {
+    padding: 10px;
+    align-items: center;
+  }
+
+  .main-content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .todolist, .log-terminal {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
 }
 
 .main-content {
@@ -40,10 +61,11 @@ body {
 }
 
 h1 {
-  font-size: 16px;
-  color: #333;
+  font-size: 36px;
+  color: #696997;
   margin-bottom: 10px;
   text-align: center;
+  margin-top: 0;
 }
 
 input[type="text"] {
@@ -156,19 +178,35 @@ li.skeleton::before {
 }
 
 li.new-item {
-  animation: slideIn 0.5s ease-out forwards;
+  /* animation: slideIn 0.5s ease-out forwards; */
+  opacity: 0.3 !important;
 }
 
 li.deleting {
-  animation: fadeOutUp 0.5s ease-in forwards;
+  /* animation: fadeOutUp 0.5s ease-in forwards; */
+  opacity: 0.3 !important;
 }
 
 .mode-toggle {
   display: flex;
   justify-content: center;
-  margin: 1em 0;
+  margin: 1em 0 0 0;
 }
 
 .mode-toggle label {
   margin-right: 1em;
+}
+
+.transparent {
+  opacity: 0.3 !important;
+}
+
+.transparent button {
+  display: none;
+}
+
+blockquote {
+  font-size: 14px;
+  color: #666;
+  margin: 1rem 0;
 }

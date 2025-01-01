@@ -128,6 +128,24 @@ This means that any other service we have in our platform no longer needs to wor
 
 Let's agree on a message-passing standard between the frontend and the backend socket server. In our main use case, which is receiving updates about database interactions, we're going to need two schemas.
 
+## Modes of Operation
+
+In the example React application, I give three modes.
+
+- `Safe`: Safe mode waits for websocket confirmation before updating the UX. It is the slowest but most reliable mode.
+- `Optimistic`: Optimistic mode waits for HTTP confirmation before updating the UX and ignores websocket confirmation. This is how most web apps work.
+- `Brave`: Brave mode waits for neither websocket nor HTTP confirmation before updating the UX. This is the most performant and dangerous mode.
+
+The basic difference is how the todo add or delete is confirmed. I do a really basic opacity change and waiting spinner to let the user know that something is happening with that specific todo item, your UX should be much smarter than this example.
+
+| Mode | WebSocket Confirmation | HTTP Confirmation | UX Update Timing |
+|------------|------------------------|-------------------|---------------------------|
+| Safe | ✅ Yes | ✅ Yes | After WebSocket confirmation |
+| Optimistic | ❌ No | ✅ Yes | After HTTP confirmation |
+| Brave | ❌ No | ❌ No | Immediately |
+
+As you can imagine, in scenarios where you must know if osmething went through and is stored, you cannot ever use `Brave` (or foolish depending on your perspective) because adding a todo item then closing the browser means data will be lost.
+
 ### The internal status schema
 
 This is an object that can be emitted by any service in the platform. It must contain the user ID of the target user and a payload of data destined for that user. This event is specifcally to send messages to the frontend users, it will be triggered after a success message from the todo service. This a very important distinction.

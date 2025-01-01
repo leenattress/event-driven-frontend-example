@@ -12,6 +12,12 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import './App.css';
 
+const MODE_EXPLANATIONS = {
+  Safe: 'Safe mode waits for websocket confirmation before updating the UX. It is the slowest but most reliable mode.',
+  Optimistic: 'Optimistic mode waits for HTTP confirmation before updating the UX and ignores websocket confirmation. This is how most web apps work.',
+  Brave: 'Brave mode waits for neither websocket nor HTTP confirmation before updating the UX. This is the most performant and dangerous mode.',
+};
+
 function App() {
   const [todos, setTodos] = useState([]);
   const [newTodoText, setNewTodoText] = useState('');
@@ -25,21 +31,19 @@ function App() {
     onError: (error) => setLogs(prevLogs => [...prevLogs, `⚡️ WebSocket - Error: ${error}`]),
     onMessage: (event) => {
       const { verb, payload } = JSON.parse(event.data);
-      setLogs(prevLogs => [...prevLogs, `⚡️ WebSocket - Received message '${verb}' for todo '${payload.text}'`]);
+      setLogs(prevLogs => [...prevLogs, `⚡️ WebSocket - Received confirmation for '${verb}' for todo ${payload.id}`]);
 
       switch (verb) {
         case 'create':
-          if (payload && payload.id) {
-            setTodos(prevTodos => {
-              const todoExists = prevTodos.some(todo => todo.id === payload.id);
-              if (todoExists) {
-                return prevTodos.map(todo =>
-                  todo.id === payload.id ? { ...todo, confirmed: true, text: `${payload.text} ⚡️` } : todo
-                );
-              } else {
-                return [...prevTodos, { id: payload.id, text: `${payload.text} ⚡️`, confirmed: true }];
-              }
-            });
+          if (payload && payload.id && mode === 'Safe') {
+            const existingTodo = todos.find(todo => todo.id === payload.id);
+            if (existingTodo) {
+              setTodos(prevTodos => prevTodos.map(todo =>
+                todo.id === payload.id ? { ...payload, confirmed: true } : todo
+              ));
+            } else {
+              setTodos(prevTodos => [...prevTodos, payload]);
+            }
           }
           break;
         case 'update':
@@ -52,7 +56,7 @@ function App() {
           }
           break;
         case 'delete':
-          if (payload) {
+          if (payload && mode === 'Safe') {
             setTodos(prevTodos => prevTodos.filter(todo => todo.id !== payload));
           }
           break;
@@ -67,7 +71,7 @@ function App() {
     handleModeChange('Safe');
     setNewTodoText(randomTodos[Math.floor(Math.random() * randomTodos.length)]);
     const fetchTodosWrapper = async () => {
-      setLogs(prevLogs => [...prevLogs, "☁️ HTTP - Fetching todos via HTTP..."]);
+      setLogs(prevLogs => [...prevLogs, "☁️ HTTP - Fetching all todos via HTTP..."]);
       const fetchedTodos = await fetchTodos({
         onFailure: () => {
           setLogs(prevLogs => [...prevLogs, "☁️ HTTP - Failed to fetch todos, please check your network connection."]);
@@ -84,65 +88,73 @@ function App() {
   const handleAddTodo = async () => {
     if (newTodoText.trim()) {
       const tempId = Date.now();
-      setTodos([...todos, { id: tempId, text: newTodoText, confirmed: false, className: 'new-item' }]);
-      setNewTodoText('');
-
-      try {
+      const newTodo = { id: tempId, text: newTodoText, confirmed: true };
+      
+      if (mode === 'Brave') {
+        setTodos(prevTodos => [...prevTodos, newTodo]);
         setNewTodoText(randomTodos[Math.floor(Math.random() * randomTodos.length)]);
-        setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Creating todo: ${newTodoText}`]);
-        const newTodo = await createTodo({ text: newTodoText });
-        setTodos(prevTodos =>
-          prevTodos.map(todo =>
-            todo.id === tempId ? { ...newTodo, confirmed: true, className: '' } : todo
-          )
-        );
-        setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Todo created: ${newTodoText}`]);
-      } catch (error) {
-        setTodos(prevTodos => prevTodos.filter(todo => todo.id !== tempId));
-        setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Failed to create todo: ${error}`]);
+        setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Creating todo: ${newTodoText} with id: ${tempId}`]);
+        createTodo(newTodo).catch(error => {
+          setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Failed to create todo: ${error}`]);
+        });
+      } else {
+        setTodos([...todos, { ...newTodo, waiting: true, confirmed: false, className: 'new-item' }]);
+        setNewTodoText('');
+
+        try {
+          setNewTodoText(randomTodos[Math.floor(Math.random() * randomTodos.length)]);
+          setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Creating todo: ${newTodoText} with id: ${tempId}`]);
+          const createdTodo = await createTodo(newTodo);
+          if (mode === 'Optimistic') {
+            setTodos(prevTodos =>
+              prevTodos.map(todo =>
+                todo.id === tempId ? { ...createdTodo, confirmed: true, className: '' } : todo
+              )
+            );
+          }
+          setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Todo created: ${newTodoText}`]);
+        } catch (error) {
+          setTodos(prevTodos => prevTodos.filter(todo => todo.id !== tempId));
+          setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Failed to create todo: ${error}`]);
+        }
       }
     }
   };
 
   const handleDeleteTodo = async (id) => {
-    try {
-      setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Deleting todo with id: ${id}`]);
-      setTodos(prevTodos =>
-        prevTodos.map(todo =>
-          todo.id === id ? { ...todo, className: 'deleting' } : todo
-        )
-      );
-      await deleteTodo(id);
+    if (mode === 'Brave') {
       setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
-      setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Todo deleted with id: ${id}`]);
-    } catch (error) {
-      setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Failed to delete todo with id: ${id}`]);
+      setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Deleting todo with id: ${id}`]);
+      deleteTodo(id).catch(error => {
+        setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Failed to delete todo with id: ${id}`]);
+      });
+    } else {
+      try {
+        setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Deleting todo with id: ${id}`]);
+        setTodos(prevTodos =>
+          prevTodos.map(todo =>
+            todo.id === id ? { ...todo, className: 'deleting', waiting: true } : todo
+          )
+        );
+        await deleteTodo(id);
+        if (mode === 'Optimistic') {
+          setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
+        }
+        setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Todo deleted with id: ${id}`]);
+      } catch (error) {
+        setLogs(prevLogs => [...prevLogs, `☁️ HTTP - Failed to delete todo with id: ${id}`]);
+      }
     }
   };
 
   const handleModeChange = (newMode) => {
     setMode(newMode);
-    setLogs(prevLogs => {
-      let explanation = '';
-      switch (newMode) {
-        case 'Safe':
-          explanation = 'Safe mode waits for websocket confirmation before updating the UX. It is the most reliable mode.';
-          break;
-        case 'Optimistic':
-          explanation = 'Optimistic mode waits for HTTP confirmation before updating the UX and ignores websocket confirmation.';
-          break;
-        case 'Brave':
-          explanation = 'Brave mode waits for neither websocket nor HTTP confirmation before updating the UX. This is the most performant mode.';
-          break;
-        default:
-          explanation = 'Unknown mode.';
-      }
-      return [...prevLogs, `🔄 Mode changed to: ${newMode}. ${explanation}`];
-    });
+    setLogs(prevLogs => [...prevLogs, `🔄 Mode changed to: ${newMode}. ${MODE_EXPLANATIONS[newMode] || 'Unknown mode.'}`]);
   };
 
   return (
     <div className="App">
+      <h1>🚀 Resilient Todo App</h1>
       <div className="mode-toggle">
         <label>
           <input
@@ -171,7 +183,11 @@ function App() {
           />
           Brave Mode
         </label>
+
       </div>
+      <blockquote>
+        {MODE_EXPLANATIONS[mode] || 'Unknown mode.'}
+      </blockquote>
       <div className="main-content">
         <div className="todolist">
           <TodoInput value={newTodoText || ''} onChange={(e) => setNewTodoText(e.target.value)} />

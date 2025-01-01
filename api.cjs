@@ -53,8 +53,10 @@ app.get('/todos', (req, res) => {
 
 // Add a new todo
 app.post('/todos', (req, res) => {
-    const { text } = req.body;
-    const id = Date.now(); // Use timestamp as a unique ID
+    const { id, text } = req.body;
+    if (!id) {
+        id = Date.now(); // Use timestamp as a unique ID
+    }
     const newTodo = { id, text, completed: false };
     console.log(`Adding new todo: ${JSON.stringify(newTodo)}`);
 
