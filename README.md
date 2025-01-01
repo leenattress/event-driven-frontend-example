@@ -146,7 +146,7 @@ This is an object that can be emitted by any service in the platform. It must co
 - `action` - This will be passed into the frontend app. It lets the app know what context the payload will be applied to.
 - `payload` - This is the data that will be passed into the function handling the action in the frontend.
 
-### The front-end socket schema
+### The front-end payload schema
 
 After we have traded our user ID for our socket ID, we can now target the correct browser window for that user. This schema will be the payload from the first schema. We will add some structure to this payload so the front end has an easier time using it, with things such as the success or failure of the command, and helpful keys like a timestamp and the entity ID we target to update in the UX.
 
