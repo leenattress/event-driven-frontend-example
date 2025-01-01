@@ -8,13 +8,11 @@ function TodoList({ todos, loading, onDelete }) {
           <li key={index} className="skeleton"></li>
         ))
       ) : todos.length === 0 ? (
-        <li>No todos available</li>
+        <li style={{textAlign: 'center', fontStyle: 'italic', color: '#666'}}>No todos available, add one above.</li>
       ) : (
         todos.map(todo => (
           <li key={todo.id} className={todo?.className ? todo?.className : ''}>
-            {todo.text}
-            {/* {todo?.confirmed ? '🌈' : ''} */}        
-                
+            {todo.text}                
             {todo && todo.waiting ? (
               <span className="waiting">⧗</span>
             ) : (

@@ -155,6 +155,7 @@ function App() {
   return (
     <div className="App">
       <h1>🚀 Resilient Todo App</h1>
+      <h2>An app that pretends to suffer from terrible network and scale issues</h2>
       <div className="mode-toggle">
         <label>
           <input
