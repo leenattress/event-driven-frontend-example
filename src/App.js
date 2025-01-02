@@ -6,6 +6,7 @@ import TodoButton from './components/TodoButton';
 import TodoList from './components/TodoList';
 import LogTerminal from './components/LogTerminal';
 import randomTodos from './randomTodos';
+import { LineChart, Line, Legend, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,7 +24,8 @@ function App() {
   const [newTodoText, setNewTodoText] = useState('');
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState([]);
-  const [mode, setMode] = useState('Safe'); // State to toggle between modes
+  const [mode, setMode] = useState('Safe');
+  const [chartData, setChartData] = useState([]);
 
   useWebSocket('ws://localhost:7687', {
     onOpen: () => setLogs(prevLogs => [...prevLogs, '⚡️ WebSocket - Connection opened']),
@@ -31,9 +33,17 @@ function App() {
     onError: (error) => setLogs(prevLogs => [...prevLogs, `⚡️ WebSocket - Error: ${error}`]),
     onMessage: (event) => {
       const { verb, payload } = JSON.parse(event.data);
-      setLogs(prevLogs => [...prevLogs, `⚡️ WebSocket - Received confirmation for '${verb}' for todo ${payload.id}`]);
+      if (verb !== 'stats') {
+        setLogs(prevLogs => [...prevLogs, `⚡️ WebSocket - Received confirmation for '${verb}' for todo ${payload.id}`]);
+      }
 
       switch (verb) {
+        case 'stats':
+          setChartData(prevData => {
+            const newData = [...prevData, { time: new Date(payload.time), todos: payload.todos, queue: payload.queue }];
+            return newData.slice(-300);
+          });
+          break;
         case 'create':
           if (payload && payload.id && mode === 'Safe') {
             const existingTodo = todos.find(todo => todo.id === payload.id);
@@ -89,7 +99,7 @@ function App() {
     if (newTodoText.trim()) {
       const tempId = Date.now();
       const newTodo = { id: tempId, text: newTodoText, confirmed: true };
-      
+
       if (mode === 'Brave') {
         setTodos(prevTodos => [...prevTodos, newTodo]);
         setNewTodoText(randomTodos[Math.floor(Math.random() * randomTodos.length)]);
@@ -196,7 +206,18 @@ function App() {
           <TodoList todos={todos} loading={loading} onDelete={handleDeleteTodo} />
         </div>
         <LogTerminal logs={logs} />
+        <div className="chart">
+          <LineChart width={300} height={500} data={chartData}>
+            <XAxis dataKey="time" label={{ value: 'Time', position: 'insideBottomRight', offset: -5 }} />
+            <YAxis label={{ value: 'Count', angle: -90, position: 'insideLeft' }} />
+            <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
+            <Legend />
+            <Line type="monotone" dataKey="todos" stroke="#8884d8" />
+            <Line type="monotone" dataKey="queue" stroke="#82ca9d" />
+          </LineChart>
+        </div>
       </div>
+
       <ToastContainer />
     </div>
   );

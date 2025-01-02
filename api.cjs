@@ -43,7 +43,8 @@ setInterval(() => {
             }
         }, Math.random() * 2000 + 3000); // Random delay between 3000ms (3s) and 6000ms (6s)
     }
-}, 500);
+    broadcastUpdate('stats', { todos: todos.length, queue: queue.length, time: new Date().toISOString() });
+}, 250);
 
 // Get all todos
 app.get('/todos', (req, res) => {
@@ -53,7 +54,7 @@ app.get('/todos', (req, res) => {
 
 // Add a new todo
 app.post('/todos', (req, res) => {
-    const { id, text } = req.body;
+    let { id, text } = req.body; // Changed to let since we modify id
     if (!id) {
         id = Date.now(); // Use timestamp as a unique ID
     }

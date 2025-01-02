@@ -13,13 +13,31 @@ This example separates the HTTP reception of commands from backend processing, f
 - Demonstrates eventual consistency in a web application
 - Random deliberate 500 errors that we recover from with retrys in the frontend
 
-## Start the demo
+## Demo
 
+#### Install
 ```bash
 npm i
+```
+#### Start API
+```bash
 npm run api
+```
+#### Start Frontend
+```bash
 npm run start
 ```
+#### Start Artillery Test
+```bash
+npm run artillery
+```
+(Now watch the graph 📈 in the frontend)
+
+#### Pre rendered previous run of Artillery
+
+[test-run-report.json.html](test-run-report.json.html)
+
+---
 
 # 🤔 Why Though?
 
