@@ -23,7 +23,7 @@
     "eject": "react-scripts eject",
     "api": "node api.cjs",
     "artillery": "artillery run --output test-run-report.json artillery.yml",
-    "artillery-report": "artillery report test-run-report.json"
+    "artillery-report-html": "artillery report test-run-report.json --output test-run-report.html"
   },
   "eslintConfig": {
     "extends": [

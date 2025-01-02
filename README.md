@@ -33,9 +33,10 @@ npm run artillery
 ```
 (Now watch the graph 📈 in the frontend)
 
-#### Pre rendered previous run of Artillery
-
-[test-run-report.json.html](test-run-report.json.html)
+#### Generate report HTML
+```bash
+npm run artillery-report-html
+```
 
 ---
 
